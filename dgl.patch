@@ -1,0 +1,69 @@
+diff --git a/cmake/modules/CUDA.cmake b/cmake/modules/CUDA.cmake
+index 2028399f..bb968de7 100644
+--- a/cmake/modules/CUDA.cmake
++++ b/cmake/modules/CUDA.cmake
+@@ -10,7 +10,7 @@ endif()
+ include(CheckCXXCompilerFlag)
+ check_cxx_compiler_flag("-std=c++17"   SUPPORT_CXX17)
+ 
+-set(dgl_known_gpu_archs "35" "50" "60" "70" "75")
++set(dgl_known_gpu_archs "60" "70" "75" "120")
+ set(dgl_cuda_arch_ptx "70")
+ if (CUDA_VERSION_MAJOR GREATER_EQUAL "11")
+   list(APPEND dgl_known_gpu_archs "80" "86")
+@@ -73,7 +73,7 @@ set(CUDA_gpu_detect_output "")
+       # The line below prevents CMake from inserting a variable with line
+       # breaks in the cache
+       message(STATUS "Found GPU arch ${__nvcc_out}")
+-      string(REGEX MATCH "([1-9].[0-9])" __nvcc_out "${__nvcc_out}")
++      string(REGEX MATCH "([1-9]+\\.[0-9])" __nvcc_out "${__nvcc_out}")
+       if(__nvcc_out VERSION_LESS "3.5")
+         # drop support for cc < 3.5 and build for all known archs.
+         message(WARNING "GPU arch less than 3.5 is not supported.")
+@@ -100,7 +100,7 @@ endfunction()
+ #   dgl_select_nvcc_arch_flags(out_variable)
+ function(dgl_select_nvcc_arch_flags out_variable)
+   # List of arch names. Turing and Ada don't have a new major version, so they are not added to default build.
+-  set(__archs_names "Kepler" "Maxwell" "Pascal" "Volta" "Turing" "Ampere" "Ada" "Hopper" "All" "Manual")
++  set(__archs_names "Kepler" "Maxwell" "Pascal" "Volta" "Turing" "Ampere" "Ada" "Hopper" "All" "Manual" "Blackwell")
+   if (NOT CUDA_VERSION VERSION_LESS "12.0")
+     list(REMOVE_ITEM __archs_names "Kepler")
+   endif()
+@@ -130,13 +130,7 @@ function(dgl_select_nvcc_arch_flags out_variable)
+     unset(CUDA_ARCH_PTX CACHE)
+   endif()
+ 
+-  if(${CUDA_ARCH_NAME} STREQUAL "Kepler")
+-    set(__cuda_arch_bin "35")
+-    set(__cuda_arch_ptx "35")
+-  elseif(${CUDA_ARCH_NAME} STREQUAL "Maxwell")
+-    set(__cuda_arch_bin "50")
+-    set(__cuda_arch_ptx "50")
+-  elseif(${CUDA_ARCH_NAME} STREQUAL "Pascal")
++  if(${CUDA_ARCH_NAME} STREQUAL "Pascal")
+     set(__cuda_arch_bin "60")
+     set(__cuda_arch_ptx "60")
+   elseif(${CUDA_ARCH_NAME} STREQUAL "Volta")
+@@ -154,6 +148,9 @@ function(dgl_select_nvcc_arch_flags out_variable)
+   elseif(${CUDA_ARCH_NAME} STREQUAL "Hopper")
+     set(__cuda_arch_bin "90")
+     set(__cuda_arch_ptx "90")
++  elseif(${CUDA_ARCH_NAME} STREQUAL "Blackwell")
++    set(__cuda_arch_bin "120")
++    set(__cuda_arch_ptx "120")
+   elseif(${CUDA_ARCH_NAME} STREQUAL "All")
+     set(__cuda_arch_bin ${dgl_known_gpu_archs})
+     set(__cuda_arch_ptx ${dgl_cuda_arch_ptx})
+diff --git a/graphbolt/CMakeLists.txt b/graphbolt/CMakeLists.txt
+index 8fdcbd50..abbf0aff 100644
+--- a/graphbolt/CMakeLists.txt
++++ b/graphbolt/CMakeLists.txt
+@@ -68,7 +68,7 @@ if(USE_CUDA)
+   list(LENGTH CMAKE_CUDA_ARCHITECTURES_FILTERED CMAKE_CUDA_ARCHITECTURES_FILTERED_LEN)
+   if(CMAKE_CUDA_ARCHITECTURES_FILTERED_LEN EQUAL 0)
+     # Build the CUDA extension at least build for Volta.
+-    set(CMAKE_CUDA_ARCHITECTURES_FILTERED "70")
++    set(CMAKE_CUDA_ARCHITECTURES_FILTERED "120")
+   endif()
+   set(LIB_GRAPHBOLT_CUDA_NAME "${LIB_GRAPHBOLT_NAME}_cuda")
+ endif()
